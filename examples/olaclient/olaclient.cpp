@@ -16,6 +16,8 @@ using namespace std;
 #define I2C_ADPT 1
 #define I2C_ADDR 0x40
 
+#define BYTES_PER_I2C  (_PCA9685_CHANS * 2)
+
 // global var for i2c file descriptor
 int i2c_fd;
 
@@ -42,12 +44,16 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
   } // for
 
   int dmxVals[_PCA9685_CHANS];
+
+  const int NUM_I2C_ADDRS = 3;
+  unsigned char i2cAddrs[NUM_I2C_ADDRS] = {0x40, 0x43, 0x44};
  
   // 16-bit ola values so two 8-bit dmx channels per 12-bit pwm value
   for (unsigned int dmxChan = 0; dmxChan < inData.length(); dmxChan++) {
 
     // disregard any data after pwm values
-    if (dmxChan >= _PCA9685_CHANS * 2) break;
+    // TODO: disregard any data after declared I2C addrs
+    if (dmxChan >= BYTES_PER_I2C * NUM_I2C_ADDRS) break;
  
     // get both bytes and increment dmxChan
     int msb = inData.at(dmxChan);
@@ -67,13 +73,14 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
 
     // store the 12-bit pwmVal
     offVals[pwmChan] = pwmVal;
- 
+
+//    int i2cAddrIdx = dmxChan >= _PCA9685_CHANS * 2
     // update all PWM values once at end of frame
-    if (dmxChan == _PCA9685_CHANS * 2 - 1) {
+    if ((dmxChan + 1) % BYTES_PER_I2C == 0) {
 
       // update all channels from offVals
       int ret;
-      ret = PCA9685_setPWMVals(i2c_fd, I2C_ADDR, onVals, offVals);
+      ret = PCA9685_setPWMVals(i2c_fd, i2cAddrs[dmxChan/BYTES_PER_I2C], onVals, offVals);
       if (ret != 0) {
         cout << "NewDMX(): PCA9685_setPWMVals() returned " << ret << endl;
         return;
