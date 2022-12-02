@@ -112,24 +112,24 @@ int main() {
   cout << "ohai" << endl;
 
   for (int i = 0; i < 3; i++){
+      const unsigned char i2c_addr = i2cAddrs[i];
+      // setup I2C device
+      i2c_fd = PCA9685_openI2C(I2C_ADPT, i2c_addr);
+      if (i2c_fd < 0) {
+        cout << "main(): PCA9685_openI2C() returned " << i2c_fd;
+        cout << " on I2C_ADPT " << I2C_ADPT << " at i2c_addr " << i2c_addr << endl;
+        return i2c_fd;
+      } // if err
 
+      // setup PCA9685 device
+      int ret;
+      ret = PCA9685_initPWM(i2c_fd, i2c_addr, PWM_FREQ);
+      if (ret != 0) {
+        cout << "main(): PCA9685_initPWM() returned " << ret;
+        cout << " i2c_addr " << i2c_addr << " PWM_FREQ " << PWM_FREQ << endl;
+        return ret;
+      } // if err
   }
-  // setup I2C device
-  i2c_fd = PCA9685_openI2C(I2C_ADPT, I2C_ADDR);
-  if (i2c_fd < 0) {
-    cout << "main(): PCA9685_openI2C() returned " << i2c_fd;
-    cout << " on I2C_ADPT " << I2C_ADPT << " at I2C_ADDR " << I2C_ADDR << endl;
-    return i2c_fd;
-  } // if err
-
-  // setup PCA9685 device
-  int ret;
-  ret = PCA9685_initPWM(i2c_fd, I2C_ADDR, PWM_FREQ);
-  if (ret != 0) {
-    cout << "main(): PCA9685_initPWM() returned " << ret;
-    cout << " I2C_ADDR " << I2C_ADDR << " PWM_FREQ " << PWM_FREQ << endl;
-    return ret;
-  } // if err
 
   // setup ola logging and wrapper
   ola::InitLogging(ola::OLA_LOG_INFO, ola::OLA_LOG_STDERR);
