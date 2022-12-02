@@ -7,7 +7,9 @@
 using namespace std;
 
 #include <PCA9685.h>
+#include <iostream>
 #include "config.h"
+#include "../../src/PCA9685.h"
 
 #define PWM_FREQ 200
 #define DMX_UNIVERSE 1
@@ -29,6 +31,8 @@ void RegisterComplete(const ola::client::Result& result) {
 // Called when new DMX data arrives.
 void NewDmx(const ola::client::DMXMetadata &metadata,
             const ola::DmxBuffer &data) {
+    unsigned int universe = metadata.universe;
+
   static string inData="";
   inData = data.Get();
   unsigned int onVals[_PCA9685_CHANS];
@@ -111,8 +115,11 @@ int main() {
   ola::client::OlaClient *client = wrapper.GetClient();
   // Set the callback and register our interest in this universe
   client->SetDMXCallback(ola::NewCallback(&NewDmx));
-  client->RegisterUniverse(
-      DMX_UNIVERSE, ola::client::REGISTER, ola::NewSingleCallback(&RegisterComplete));
-  wrapper.GetSelectServer()->Run();
+
+  for (int i = 0; i < 5; i++) {
+      client->RegisterUniverse(
+              DMX_UNIVERSE + i, ola::client::REGISTER, ola::NewSingleCallback(&RegisterComplete));
+      wrapper.GetSelectServer()->Run();
+  }
 }
 
