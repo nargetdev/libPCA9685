@@ -8,6 +8,7 @@ using namespace std;
 
 #include <PCA9685.h>
 #include <iostream>
+#include <unistd.h>
 #include "config.h"
 #include "../../src/PCA9685.h"
 
@@ -21,6 +22,8 @@ using namespace std;
 // global var for i2c file descriptor
 int i2c_fd;
 
+const int NUM_I2C_ADDRS = 3;
+unsigned char i2cAddrs[NUM_I2C_ADDRS] = {0x40, 0x43, 0x44};
 
 // Called when universe registration completes.
 void RegisterComplete(const ola::client::Result& result) {
@@ -34,7 +37,6 @@ void RegisterComplete(const ola::client::Result& result) {
 void NewDmx(const ola::client::DMXMetadata &metadata,
             const ola::DmxBuffer &data) {
 
-    const int NUM_I2C_ADDRS = 3;
     const int TOTAL_12bit_VALUES = _PCA9685_CHANS * NUM_I2C_ADDRS;
 
     unsigned int universe = metadata.universe;
@@ -50,7 +52,6 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
 
   int dmxVals[TOTAL_12bit_VALUES];
 
-  unsigned char i2cAddrs[NUM_I2C_ADDRS] = {0x40, 0x43, 0x44};
 
   // 16-bit ola values so two 8-bit dmx channels per 12-bit pwm value
   for (unsigned int dmxChan = 0; dmxChan < inData.length(); dmxChan++) {
@@ -94,6 +95,9 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
       // update all channels from offVals
       int ret;
       ret = PCA9685_setPWMVals(i2c_fd, i2cAddrs[dmxChan/BYTES_PER_I2C], onValsCache, offValsCache);
+
+      usleep(200); // let the i2c bus settle down?
+
       if (ret != 0) {
         cout << "NewDMX(): PCA9685_setPWMVals() returned " << ret << endl;
         return;
@@ -106,6 +110,10 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
 int main() {
   cout << "olaclient " << libPCA9685_VERSION_MAJOR << "." << libPCA9685_VERSION_MINOR << endl;
   cout << "ohai" << endl;
+
+  for (int i = 0; i < 3; i++){
+
+  }
   // setup I2C device
   i2c_fd = PCA9685_openI2C(I2C_ADPT, I2C_ADDR);
   if (i2c_fd < 0) {
@@ -137,10 +145,8 @@ int main() {
   // Set the callback and register our interest in this universe
   client->SetDMXCallback(ola::NewCallback(&NewDmx));
 
-  for (int i = 0; i < 5; i++) {
       client->RegisterUniverse(
-              DMX_UNIVERSE + i, ola::client::REGISTER, ola::NewSingleCallback(&RegisterComplete));
+              DMX_UNIVERSE, ola::client::REGISTER, ola::NewSingleCallback(&RegisterComplete));
       wrapper.GetSelectServer()->Run();
-  }
 }
 
