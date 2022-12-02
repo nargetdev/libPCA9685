@@ -33,19 +33,20 @@ void RegisterComplete(const ola::client::Result& result) {
 // Called when new DMX data arrives.
 void NewDmx(const ola::client::DMXMetadata &metadata,
             const ola::DmxBuffer &data) {
+
+    const int NUM_I2C_ADDRS = 3;
     unsigned int universe = metadata.universe;
 
   static string inData="";
   inData = data.Get();
-  unsigned int onVals[_PCA9685_CHANS];
-  static unsigned int offVals[_PCA9685_CHANS];
+  unsigned int onVals[_PCA9685_CHANS * NUM_I2C_ADDRS];
+  static unsigned int offVals[_PCA9685_CHANS * NUM_I2C_ADDRS];
   for (int i = 0; i < _PCA9685_CHANS; i++) {
         onVals[i] = 0;
   } // for
 
   int dmxVals[_PCA9685_CHANS];
 
-  const int NUM_I2C_ADDRS = 3;
   unsigned char i2cAddrs[NUM_I2C_ADDRS] = {0x40, 0x43, 0x44};
  
   // 16-bit ola values so two 8-bit dmx channels per 12-bit pwm value
@@ -78,6 +79,15 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
     // update all PWM values once at end of frame
     if ((dmxChan + 1) % BYTES_PER_I2C == 0) {
 
+        unsigned int onValsCache[_PCA9685_CHANS];
+        static unsigned int offValsCache[_PCA9685_CHANS];
+        // manually deep copy elements
+        for (int i = 0; i < _PCA9685_CHANS; i++){
+            onValsCache[i] = onVals[dmxChan];
+            offValsCache[i] = offVals[dmxChan];
+        }
+
+
       // update all channels from offVals
       int ret;
       ret = PCA9685_setPWMVals(i2c_fd, i2cAddrs[dmxChan/BYTES_PER_I2C], onVals, offVals);
@@ -92,6 +102,7 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
 
 int main() {
   cout << "olaclient " << libPCA9685_VERSION_MAJOR << "." << libPCA9685_VERSION_MINOR << endl;
+  cout << "ohai" << endl;
   // setup I2C device
   i2c_fd = PCA9685_openI2C(I2C_ADPT, I2C_ADDR);
   if (i2c_fd < 0) {
