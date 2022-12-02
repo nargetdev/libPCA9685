@@ -90,7 +90,7 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
 
       // update all channels from offVals
       int ret;
-      ret = PCA9685_setPWMVals(i2c_fd, i2cAddrs[dmxChan/BYTES_PER_I2C], onVals, offVals);
+      ret = PCA9685_setPWMVals(i2c_fd, i2cAddrs[dmxChan/BYTES_PER_I2C], onValsCache, offValsCache);
       if (ret != 0) {
         cout << "NewDMX(): PCA9685_setPWMVals() returned " << ret << endl;
         return;
