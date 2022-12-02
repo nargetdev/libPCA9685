@@ -23,7 +23,7 @@ using namespace std;
 int i2c_fd;
 
 const int NUM_I2C_ADDRS = 3;
-unsigned char i2cAddrs[NUM_I2C_ADDRS] = {0x40, 0x43, 0x44};
+unsigned char i2cAddrs[NUM_I2C_ADDRS] = {0x44, 0x43, 0x40};
 
 // Called when universe registration completes.
 void RegisterComplete(const ola::client::Result& result) {
