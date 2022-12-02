@@ -87,8 +87,8 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
         unsigned int offValsCache[_PCA9685_CHANS];
         // manually deep copy elements
         for (int i = 0; i < _PCA9685_CHANS; i++){
-            onValsCache[i] = onVals[dmxChan];
-            offValsCache[i] = offVals[dmxChan];
+            onValsCache[i] = onVals[pwmChan];
+            offValsCache[i] = offVals[pwmChan];
         }
 
 
@@ -96,7 +96,7 @@ void NewDmx(const ola::client::DMXMetadata &metadata,
       int ret;
       ret = PCA9685_setPWMVals(i2c_fd, i2cAddrs[dmxChan/BYTES_PER_I2C], onValsCache, offValsCache);
 
-      usleep(200); // let the i2c bus settle down?
+//      usleep(200); // let the i2c bus settle down?
 
       if (ret != 0) {
         cout << "NewDMX(): PCA9685_setPWMVals() returned " << ret << endl;
